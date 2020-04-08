@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { BrowserRouter as Router, Switch, Route, Link, useRouteMatch, useParams, useHistory  } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route, Link, useRouteMatch, useParams, useHistory } from "react-router-dom";
 import { useForm } from 'react-hook-form';
+import { useSelector, useDispatch } from 'react-redux';
+import { hot } from 'react-hot-loader';
+
 
 const Home = () => { return (<h2>Hello. You are in Home</h2>) };
 
@@ -272,28 +275,33 @@ const PostDetail = (props) => {
 };
 
 const Posts = () => {
-
+  let dispatch = useDispatch();
   let [posts, setPosts] = useState([]);
 
   let fetchData = () => {
-    fetch('http://localhost:3001/posts/search', {
-      method: 'POST', // *GET, POST, PUT, DELETE, etc.
-      mode: 'cors', // no-cors, *cors, same-origin
-      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-      headers: {
-        'Content-Type': 'application/json'
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      referrerPolicy: 'no-referrer', // no-referrer, *client
-      // body: JSON.stringify(data) // body data type must match "Content-Type" header
+    // fetch('http://localhost:3001/posts/search', {
+    //   method: 'POST', // *GET, POST, PUT, DELETE, etc.
+    //   mode: 'cors', // no-cors, *cors, same-origin
+    //   cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+    //   headers: {
+    //     'Content-Type': 'application/json'
+    //     // 'Content-Type': 'application/x-www-form-urlencoded',
+    //   },
+    //   referrerPolicy: 'no-referrer', // no-referrer, *client
+    //   // body: JSON.stringify(data) // body data type must match "Content-Type" header
+    // })
+    //   .then((response) => {
+    //     return response.json();
+    //   })
+    //   .then((result) => {
+    //     console.log(result);
+    //     setPosts(result.data);
+    //   });
+
+    dispatch({
+      type: "FETCH_POSTS", payload: [ { _id: '2', title: 'title 2'}]
     })
-      .then((response) => {
-        return response.json();
-      })
-      .then((result) => {
-        console.log(result);
-        setPosts(result.data);
-      });
+
   }
 
   useEffect(() => {
@@ -316,7 +324,16 @@ const Posts = () => {
 }
 
 
+
 function App() {
+
+  const myState = useSelector(state => {
+    console.log('App.useSelector.state.posts', state.posts);
+    return state;
+  });
+
+  const dispatch = useDispatch();
+
   return (
     <Router>
       <div className="App">
