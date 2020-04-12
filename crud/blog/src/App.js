@@ -3,7 +3,6 @@ import './App.css';
 import { BrowserRouter as Router, Switch, Route, Link, useRouteMatch, useParams, useHistory } from "react-router-dom";
 import { useForm } from 'react-hook-form';
 import { useSelector, useDispatch } from 'react-redux';
-import { hot } from 'react-hot-loader';
 
 
 const Home = () => { return (<h2>Hello. You are in Home</h2>) };
@@ -11,28 +10,15 @@ const Home = () => { return (<h2>Hello. You are in Home</h2>) };
 
 const PostCreate = () => {
   let history = useHistory();
+  let dispatch = useDispatch();
   const { register, handleSubmit, watch, errors } = useForm();
 
   let saveData = (data) => {
-    fetch('http://localhost:3001/posts', {
-      method: 'POST', // *GET, POST, PUT, DELETE, etc.
-      mode: 'cors', // no-cors, *cors, same-origin
-      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      referrerPolicy: 'no-referrer', // no-referrer, *client
-      body: JSON.stringify(data) // body data type must match "Content-Type" header
+    dispatch({
+      type: "ADD_POST", payload: data
     })
-      .then((response) => {
-        return response.json();
-      })
-      .then((result) => {
-        console.log(result);
-        history.push('/posts');
-      });
+
+    history.push('/posts');
   }
 
 
@@ -233,137 +219,227 @@ const PostSummary = (post) => {
   )
 }
 
-const PostDetail = (props) => {
+const Comments = (props) => {
 
   let { id } = useParams();
+  let dispatch = useDispatch();
 
-  let fetchData = (id) => {
-    fetch(`http://localhost:3001/posts/${id}`, {
-      method: 'GET', // *GET, POST, PUT, DELETE, etc.
-      mode: 'cors', // no-cors, *cors, same-origin
-      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-      headers: {
-        'Content-Type': 'application/json'
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      referrerPolicy: 'no-referrer', // no-referrer, *client
-      // body: JSON.stringify(data) // body data type must match "Content-Type" header
+  const comments = useSelector(state => {
+    console.log('d. Posts.useSelector.state', state);
+    return state.posts.selectedComments;
+  });
+
+  let fetchData = () => {
+    console.log('2. fetchData dispatching FETCH_POSTS');
+    dispatch({
+      type: "FETCH_COMMENTS", payload: id,
     })
-      .then((response) => {
-        return response.json();
-      })
-      .then((response) => {
-        console.log(response);
-        setPost(response.data);
-      });
   }
 
   useEffect(() => {
     fetchData(id);
-  }, [id])
-
-  let [post, setPost] = useState({});
+  }, [])
 
   return (
-    <div align="left" className="col-md-10 blogShort" id={id}>
-      <h2>{post.title}</h2>
-      <img src={post.imgUrl} style={{ height: "50px", width: "50px" }} alt="post img" className="pull-left thumb margin10 img-thumbnail"></img>
-      <article><p>{post.articleText}</p></article>
-      <a className="btn btn-blog pull-right marginBottom10" href={post.readMoreUrl}>READ MORE</a>
-    </div>
-  )
-};
-
-// async function getUserAsync(name) {
-//   await fetch(`https://api.github.com/users/${name}`).then(async (response) => {
-//     return await response.json()
-//   }
-
-const Posts = () => {
-    let dispatch = useDispatch();
-
-    //let [posts, setPosts] = useState([]);
-
-    
-    const posts = useSelector(state => {
-      console.log('d. Posts.useSelector.state', state);
-      return state.posts;
-    });
-
-    let fetchData = () => {    
-      console.log('2. fetchData dispatching FETCH_POSTS');
-      dispatch({
-        type: "FETCH_POSTS"
-      })
-    }
-
-    useEffect(() => {
-      // Update the document title using the browser API
-      // if (posts.length === 0) {
-      //   console.log('1. useEffect calling fetchData');
-      //   fetchData();
-      // }
-      console.log('1. useEffect calling fetchData');
-      fetchData();
-    }, []);
-
-    return (
+    <>
       <div className="container">
-        <div id="blog" className="row">
-          {
-            posts.map(p => <PostSummary {...p} key={p._id} />)
-          }
-          <div className="col-md-12 gap10"></div>
+        <div className="row">
+          <div className="col-sm-12">Comments count: {comments.length}</div>
+          <div className="col-sm-12">
+            {
+              comments.map(comment => {
+                let date = comment.date;
+                if (date) {
+                  let d = new Date(date.toString());
+                  date = d.toDateString();
+                }
+                else date = 'No Date';
+
+                return (
+                  <>
+                    <div className="panel panel-default" key={comment._id}>
+                      <div className="panel-body">
+                        {comment.body} [{date}]
+                      </div>
+                    </div>
+                  </>
+                );
+              }
+              )
+            }
+          </div>
         </div>
       </div>
-    )
+    </>
+  )
+};
+const CommentCreate = () => {
+  let history = useHistory();
+  let dispatch = useDispatch();
+  const { register, handleSubmit, watch, errors } = useForm();
+
+  let { id } = useParams();
+
+  let saveData = (data) => {
+
+    let comment = { body: data.title, date: new Date() };
+    console.log('save data', comment);
+
+    dispatch({
+      type: "ADD_COMMENT", payload: { postId: id, data: comment }
+    })
+
+    history.goBack();
   }
 
 
 
-  function App() {
+  const onSubmit = data => {
+    saveData(data);
+  };
 
-    const myState = useSelector(state => {
-      console.log('c. App.useSelector.state', state);
-      return state;
-    });
+  return (
+    <>
+      <div className="row">
 
-    // const dispatch = useDispatch();
-
-    return (
-      <Router>
-        <div className="App">
-          <div className="d-flex" id="wrapper">
-            <div className="bg-light border-right" id="sidebar-wrapper">
-              <div className="sidebar-heading">Code with me</div>
-              <div className="list-group list-group-flush">
-
-                <Link to="/" className="list-group-item list-group-item-action bg-light">Home</Link>
-                <Link to="/posts" className="list-group-item list-group-item-action bg-light">Posts</Link>
-                <Link to="/post-create" className="list-group-item list-group-item-action bg-light">Create Post</Link>
-              </div>
-            </div>
-
-            <div id="page-content-wrapper">
-              <nav className="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-                <h3>hello world</h3>
-              </nav>
-
-              <div className="container-fluid">
-                <Switch>
-                  <Route path="/post-detail/:id"><PostDetail /></Route>
-                  <Route path="/post-create"><PostCreate /></Route>
-                  <Route path="/post-edit/:id"><PostEdit /></Route>
-                  <Route path="/post-delete/:id"><PostDelete /></Route>
-                  <Route path="/posts"><Posts /></Route>
-                  <Route path="/"><Home /></Route>
-                </Switch>
-              </div>
+        <div className="col-md-6">
+          <div className="widget-area no-padding blank">
+            <div className="status-upload">
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <input type="text" placeholder="Write your comment here" name="title" ref={register({ required: true })} className="form-control" />
+                <input type="submit" className="btn btn-primary btn-block" />
+              </form>
             </div>
           </div>
         </div>
-      </Router>
-    );
+
+      </div>
+
+    </>
+  )
+};
+
+const PostDetail = (props) => {
+
+  let { id } = useParams();
+
+  let dispatch = useDispatch();
+
+  let fetchData = (id) => {
+    console.log('2. fetchData dispatching FETCH_POSTS');
+    dispatch({
+      type: "FETCH_POST_DETAIL", payload: id
+    })
   }
 
-  export default App;
+  useEffect(() => {
+    fetchData(id);
+  }, [])
+
+  const post = useSelector(state => {
+    console.log('d. Posts.useSelector.state', state);
+    return state.posts.selectedPost;
+  });
+
+  let match = useRouteMatch();
+
+  return (
+    <>
+      <div align="left" className="col-md-10 blogShort" id={id}>
+        <h2>{post.title}</h2>
+        <img src={post.imgUrl} style={{ height: "50px", width: "50px" }} alt="post img" className="pull-left thumb margin10 img-thumbnail"></img>
+        <article><p>{post.articleText}</p></article>
+        <a className="btn btn-blog pull-right marginBottom10" href={post.readMoreUrl}>READ MORE</a>
+      </div>
+      <div>
+        <h4>Comments</h4>
+        <Link className="btn btn-blog pull-right" to={`${match.url}/comments`}>Show comments</Link> &nbsp;
+        <Link className="btn btn-blog pull-right" to={`${match.url}/add-comment`}>Add comment</Link>
+        <Switch>
+          <Route path={`${match.path}/comments`} component={Comments}></Route>
+          <Route path={`${match.path}/add-comment`} component={CommentCreate}></Route>
+        </Switch>
+      </div>
+    </>
+  )
+};
+
+const Posts = () => {
+  let dispatch = useDispatch();
+
+  const posts = useSelector(state => {
+    console.log('d. Posts.useSelector.state', state);
+    return state.posts.postList;
+  });
+
+  let fetchData = () => {
+    console.log('2. fetchData dispatching FETCH_POSTS');
+    dispatch({
+      type: "FETCH_POSTS"
+    })
+  }
+
+  useEffect(() => {
+    console.log('1. useEffect calling fetchData');
+    fetchData();
+  }, []);
+
+  return (
+    <div className="container">
+      <div id="blog" className="row">
+        {
+          posts.map(p => <PostSummary {...p} key={p._id} />)
+        }
+        <div className="col-md-12 gap10"></div>
+      </div>
+    </div>
+  )
+}
+
+
+function App() {
+
+  const myState = useSelector(state => {
+    console.log('c. App.useSelector.state', state);
+    return state;
+  });
+
+  // const dispatch = useDispatch();
+
+  return (
+    <Router>
+      <div className="App">
+        <div className="d-flex" id="wrapper">
+          <div className="bg-light border-right" id="sidebar-wrapper">
+            <div className="sidebar-heading">Code with me</div>
+            <div className="list-group list-group-flush">
+
+              <Link to="/" className="list-group-item list-group-item-action bg-light">Home</Link>
+              <Link to="/posts" className="list-group-item list-group-item-action bg-light">Posts</Link>
+              <Link to="/post-create" className="list-group-item list-group-item-action bg-light">Create Post</Link>
+            </div>
+          </div>
+
+          <div id="page-content-wrapper">
+            <nav className="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+              <h3>hello world</h3>
+            </nav>
+
+            <div className="container-fluid">
+              <Switch>
+                <Route path="/post-detail/:id"><PostDetail /></Route>
+                <Route path="/post-create"><PostCreate /></Route>
+                <Route path="/post-edit/:id"><PostEdit /></Route>
+                <Route path="/post-delete/:id"><PostDelete /></Route>
+                <Route path="/posts"><Posts /></Route>
+                <Route path="/"><Home /></Route>
+              </Switch>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
