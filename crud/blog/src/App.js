@@ -274,100 +274,96 @@ const PostDetail = (props) => {
   )
 };
 
+// async function getUserAsync(name) {
+//   await fetch(`https://api.github.com/users/${name}`).then(async (response) => {
+//     return await response.json()
+//   }
+
 const Posts = () => {
-  let dispatch = useDispatch();
-  let [posts, setPosts] = useState([]);
+    let dispatch = useDispatch();
 
-  let fetchData = () => {
-    // fetch('http://localhost:3001/posts/search', {
-    //   method: 'POST', // *GET, POST, PUT, DELETE, etc.
-    //   mode: 'cors', // no-cors, *cors, same-origin
-    //   cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-    //   headers: {
-    //     'Content-Type': 'application/json'
-    //     // 'Content-Type': 'application/x-www-form-urlencoded',
-    //   },
-    //   referrerPolicy: 'no-referrer', // no-referrer, *client
-    //   // body: JSON.stringify(data) // body data type must match "Content-Type" header
-    // })
-    //   .then((response) => {
-    //     return response.json();
-    //   })
-    //   .then((result) => {
-    //     console.log(result);
-    //     setPosts(result.data);
-    //   });
+    //let [posts, setPosts] = useState([]);
 
-    dispatch({
-      type: "FETCH_POSTS", payload: [ { _id: '2', title: 'title 2'}]
-    })
+    
+    const posts = useSelector(state => {
+      console.log('d. Posts.useSelector.state', state);
+      return state.posts;
+    });
 
+    let fetchData = () => {    
+      console.log('2. fetchData dispatching FETCH_POSTS');
+      dispatch({
+        type: "FETCH_POSTS"
+      })
+    }
+
+    useEffect(() => {
+      // Update the document title using the browser API
+      // if (posts.length === 0) {
+      //   console.log('1. useEffect calling fetchData');
+      //   fetchData();
+      // }
+      console.log('1. useEffect calling fetchData');
+      fetchData();
+    }, []);
+
+    return (
+      <div className="container">
+        <div id="blog" className="row">
+          {
+            posts.map(p => <PostSummary {...p} key={p._id} />)
+          }
+          <div className="col-md-12 gap10"></div>
+        </div>
+      </div>
+    )
   }
 
-  useEffect(() => {
-    // Update the document title using the browser API
-    if (posts.length === 0) {
-      fetchData();
-    }
-  }, [posts]);
-
-  return (
-    <div className="container">
-      <div id="blog" className="row">
-        {
-          posts.map(p => <PostSummary {...p} key={p._id} />)
-        }
-        <div className="col-md-12 gap10"></div>
-      </div>
-    </div>
-  )
-}
 
 
+  function App() {
 
-function App() {
+    const myState = useSelector(state => {
+      console.log('c. App.useSelector.state', state);
+      return state;
+    });
 
-  const myState = useSelector(state => {
-    console.log('App.useSelector.state.posts', state.posts);
-    return state;
-  });
+    // const dispatch = useDispatch();
 
-  const dispatch = useDispatch();
+    return (
+      <Router>
+        <div className="App">
+          <div className="d-flex" id="wrapper">
+            <div className="bg-light border-right" id="sidebar-wrapper">
+              <div className="sidebar-heading">Code with me</div>
+              <div className="list-group list-group-flush">
 
-  return (
-    <Router>
-      <div className="App">
-        <div className="d-flex" id="wrapper">
-          <div className="bg-light border-right" id="sidebar-wrapper">
-            <div className="sidebar-heading">Code with me</div>
-            <div className="list-group list-group-flush">
-
-              <Link to="/" className="list-group-item list-group-item-action bg-light">Home</Link>
-              <Link to="/posts" className="list-group-item list-group-item-action bg-light">Posts</Link>
-              <Link to="/post-create" className="list-group-item list-group-item-action bg-light">Create Post</Link>
+                <Link to="/" className="list-group-item list-group-item-action bg-light">Home</Link>
+                <Link to="/posts" className="list-group-item list-group-item-action bg-light">Posts</Link>
+                <Link to="/post-create" className="list-group-item list-group-item-action bg-light">Create Post</Link>
+              </div>
             </div>
-          </div>
 
-          <div id="page-content-wrapper">
-            <nav className="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-              <h3>hello world</h3>
-            </nav>
+            <div id="page-content-wrapper">
+              <nav className="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+                <h3>hello world</h3>
+              </nav>
 
-            <div className="container-fluid">
-              <Switch>
-                <Route path="/post-detail/:id"><PostDetail /></Route>
-                <Route path="/post-create"><PostCreate /></Route>
-                <Route path="/post-edit/:id"><PostEdit /></Route>
-                <Route path="/post-delete/:id"><PostDelete /></Route>
-                <Route path="/posts"><Posts /></Route>
-                <Route path="/"><Home /></Route>
-              </Switch>
+              <div className="container-fluid">
+                <Switch>
+                  <Route path="/post-detail/:id"><PostDetail /></Route>
+                  <Route path="/post-create"><PostCreate /></Route>
+                  <Route path="/post-edit/:id"><PostEdit /></Route>
+                  <Route path="/post-delete/:id"><PostDelete /></Route>
+                  <Route path="/posts"><Posts /></Route>
+                  <Route path="/"><Home /></Route>
+                </Switch>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </Router>
-  );
-}
+      </Router>
+    );
+  }
 
-export default App;
+  export default App;
