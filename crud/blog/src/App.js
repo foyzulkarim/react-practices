@@ -388,7 +388,7 @@ const Posts = () => {
     <div className="container">
       <div id="blog" className="row">
         {
-          posts.map(p => <PostSummary {...p} key={p._id} />)
+          posts.map(p => <PostSummary {...p} key={p.id} />)
         }
         <div className="col-md-12 gap10"></div>
       </div>

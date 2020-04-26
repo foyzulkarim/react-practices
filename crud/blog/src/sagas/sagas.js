@@ -1,27 +1,45 @@
 import { call, put, takeEvery, all } from "redux-saga/effects";
+import * as api from './api';
+const BaseUrl = 'http://localhost:61361/api';
+const axios = require('axios');
 
+
+// export function* addPost(data) {
+//     console.log('addPost calling server to add post', data);
+//     try {
+//         const output = yield fetch(`${BaseUrl}/posts`, {
+//             method: 'POST',
+//             mode: 'cors',
+//             cache: 'no-cache',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 'Accept': 'application/json'
+//             },
+//             referrerPolicy: 'no-referrer',
+//             body: JSON.stringify(data.payload)
+//         })
+//             .then((response) => {
+//                 return response.json();
+//             });
+
+//         console.log('addPost saga yield ADD_POST_SUCCESS with payload', output);
+//         yield put({ type: 'ADD_POST_SUCCESS', payload: output });
+//         yield put({ type: 'FETCH_POSTS' });
+//     } catch (error) {
+//         console.log('fetch posts error', error);
+//     }
+// }
 
 export function* addPost(data) {
     console.log('addPost calling server to add post', data);
     try {
-        const output = yield fetch('http://localhost:3001/posts', {
-            method: 'POST',
-            mode: 'cors',
-            cache: 'no-cache',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            referrerPolicy: 'no-referrer',
-            body: JSON.stringify(data.payload)
-        })
-            .then((response) => {
-                return response.json();
-            });
 
-        console.log('addPost saga yield ADD_POST_SUCCESS with payload', output);
+        let output = yield call(api.createPost, data);
         yield put({ type: 'ADD_POST_SUCCESS', payload: output });
         yield put({ type: 'FETCH_POSTS' });
+
+        console.log('addPost saga yield ADD_POST_SUCCESS with payload', output);
+
     } catch (error) {
         console.log('fetch posts error', error);
     }
@@ -32,20 +50,28 @@ function* watchAddPost() {
     yield takeEvery('ADD_POST', addPost);
 }
 
+// export function* fetchPosts() {
+//     console.log('5. fetchPosts calling server to fetch posts');
+//     try {
+//         const output = yield fetch(`http://localhost:61361/api/posts`, {
+//             method: 'GET',
+//             headers: { 'Content-Type': 'application/json' }
+//         })
+//             .then((response) => {
+//                 return response.json();
+//             });
+
+//         console.log('6. fetchPosts saga yield FETCH_POSTS_SUCCESS with payload', output);
+//         yield put({ type: 'FETCH_POSTS_SUCCESS', payload: output });
+//     } catch (error) {
+//         console.log('fetch posts error', error);
+//     }
+// }
+
 export function* fetchPosts() {
     console.log('5. fetchPosts calling server to fetch posts');
     try {
-        const output = yield fetch('http://localhost:3001/posts/search', {
-            method: 'POST',
-            mode: 'cors',
-            cache: 'no-cache',
-            headers: { 'Content-Type': 'application/json' },
-            referrerPolicy: 'no-referrer',
-        })
-            .then((response) => {
-                return response.json();
-            });
-
+        const output = yield call(api.getPosts);
         console.log('6. fetchPosts saga yield FETCH_POSTS_SUCCESS with payload', output);
         yield put({ type: 'FETCH_POSTS_SUCCESS', payload: output });
     } catch (error) {
@@ -61,7 +87,7 @@ function* watchFetchPosts() {
 export function* fetchPostDetail(action) {
     console.log('5. fetchPosts calling server to fetch posts', action);
     try {
-        const output = yield fetch(`http://localhost:3001/posts/${action.payload}`, {
+        const output = yield fetch(`${BaseUrl}/posts/${action.payload}`, {
             method: 'GET',
             mode: 'cors',
             cache: 'no-cache',
@@ -88,7 +114,7 @@ function* watchFetchPostDetail() {
 export function* addComment({ payload }) {
     console.log('addComment', payload);
     try {
-        const output = yield fetch(`http://localhost:3001/posts/${payload.postId}/comments`, {
+        const output = yield fetch(`${BaseUrl}/posts/${payload.postId}`, {
             method: 'POST',
             mode: 'cors',
             cache: 'no-cache',
