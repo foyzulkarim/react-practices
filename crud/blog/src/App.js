@@ -4,14 +4,29 @@ import { BrowserRouter as Router, Switch, Route, Link, useRouteMatch, useParams,
 import { useForm } from 'react-hook-form';
 import { useSelector, useDispatch } from 'react-redux';
 
-
 const Home = () => { return (<h2>Hello. You are in Home</h2>) };
-
 
 const PostCreate = () => {
   let history = useHistory();
   let dispatch = useDispatch();
   const { register, handleSubmit, watch, errors } = useForm();
+
+  const [location, setLocation] = useState({});
+
+  function success(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    //location = { latitude, longitude };  
+    setLocation({ latitude, longitude });
+  }
+
+  function error() {
+    console.error('Unable to retrieve your location');
+  }
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(success, error);
+  }
 
   let saveData = (data) => {
     dispatch({
@@ -21,14 +36,15 @@ const PostCreate = () => {
     history.push('/posts');
   }
 
-
   const onSubmit = data => {
-    saveData(data);
+    let payload = { ...data, lat: location.latitude.toString(), long: location.longitude.toString() };
+    saveData(payload);
   };
 
   return (
     <>
       <h2>Create new Post</h2>
+      <h4>Location: {location.latitude}, {location.longitude}</h4>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="form-group input-group">
           <input type="text" placeholder="Title" name="title" ref={register({ required: true })} className="form-control" />
@@ -43,7 +59,6 @@ const PostCreate = () => {
         <div className="form-group input-group">
           <input type="url" placeholder="Image URL" name="imgUrl" ref={register({ required: true })} className="form-control" />
         </div>
-
         <input type="submit" className="btn btn-primary btn-block" />
       </form>
     </>
@@ -54,55 +69,41 @@ const PostEdit = (props) => {
   let history = useHistory();
   const { register, handleSubmit, watch, errors } = useForm();
   let { id } = useParams();
+  let dispatch = useDispatch();
+
+  const [location, setLocation] = useState({});
+
+  function success(position) {
+    const latitude = position.coords.latitude;
+    const longitude = position.coords.longitude;
+    //location = { latitude, longitude };  
+    setLocation({ latitude, longitude });
+  }
+
+  function error() {
+    console.error('Unable to retrieve your location');
+  }
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(success, error);
+  }
 
   let fetchData = (id) => {
-    fetch(`http://localhost:3001/posts/${id}`, {
-      method: 'GET', // *GET, POST, PUT, DELETE, etc.
-      mode: 'cors', // no-cors, *cors, same-origin
-      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-      headers: {
-        'Content-Type': 'application/json'
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      referrerPolicy: 'no-referrer', // no-referrer, *client
-      // body: JSON.stringify(data) // body data type must match "Content-Type" header
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((response) => {
-        console.log(response);
-        setPost(response.data);
-      });
+    dispatch({ type: "FETCH_POST_DETAIL", payload: id });
   }
 
   useEffect(() => {
     fetchData(id);
   }, [id])
 
-  let [post, setPost] = useState({});
-
+  const post = useSelector(state => {
+    return state.posts.selectedPost;
+  });
 
   let updateData = (data) => {
-    fetch(`http://localhost:3001/posts/${id}`, {
-      method: 'PUT', // *GET, POST, PUT, DELETE, etc.
-      mode: 'cors', // no-cors, *cors, same-origin
-      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      referrerPolicy: 'no-referrer', // no-referrer, *client
-      body: JSON.stringify(data) // body data type must match "Content-Type" header
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((result) => {
-        console.log(result);
-        history.push('/posts');
-      });
+    const payload = { ...data, id, lat: location.latitude.toString(), long: location.longitude.toString() };
+    dispatch({ type: "EDIT_POST", payload: payload });
+    history.push('/posts');
   }
 
   const onSubmit = data => {
@@ -112,6 +113,7 @@ const PostEdit = (props) => {
   return (
     <>
       <h2>Update new Post</h2>
+      <h4>Location: {location.latitude}, {location.longitude}</h4>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="form-group input-group">
           <input type="text" placeholder="Title" name="title" defaultValue={post.title} ref={register({ required: true })} className="form-control" />
@@ -137,55 +139,24 @@ const PostDelete = (props) => {
   const { register, handleSubmit, watch, errors } = useForm();
   let { id } = useParams();
   let history = useHistory();
+  let dispatch = useDispatch();
 
   let fetchData = (id) => {
-    fetch(`http://localhost:3001/posts/${id}`, {
-      method: 'GET', // *GET, POST, PUT, DELETE, etc.
-      mode: 'cors', // no-cors, *cors, same-origin
-      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-      headers: {
-        'Content-Type': 'application/json'
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      referrerPolicy: 'no-referrer', // no-referrer, *client
-      // body: JSON.stringify(data) // body data type must match "Content-Type" header
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((response) => {
-        console.log(response);
-        setPost(response.data);
-      });
+    dispatch({ type: "FETCH_POST_DETAIL", payload: id });
   }
 
   useEffect(() => {
     fetchData(id);
   }, [id])
 
-  let [post, setPost] = useState({});
+  const post = useSelector(state => {
+    return state.posts.selectedPost;
+  });
 
 
   let deleteData = () => {
-    fetch(`http://localhost:3001/posts/${id}`, {
-      method: 'DELETE', // *GET, POST, PUT, DELETE, etc.
-      mode: 'cors', // no-cors, *cors, same-origin
-      cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-        // 'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      referrerPolicy: 'no-referrer', // no-referrer, *client
-      //body: JSON.stringify(data) // body data type must match "Content-Type" header
-    })
-      .then((response) => {
-        return response.json();
-      })
-      .then((result) => {
-        console.log(result);
-        history.push('/posts');
-      });
+    dispatch({ type: "DELETE_POST", payload: id });
+    history.push('/posts');
   }
 
   const onSubmit = data => {
@@ -205,16 +176,15 @@ const PostDelete = (props) => {
   )
 };
 
-
 const PostSummary = (post) => {
   return (
-    <div align="left" className="col-md-10 blogShort" id={post._id}>
+    <div align="left" className="col-md-10 blogShort" id={post.id}>
       <h3>{post.title}</h3>
       <img src={post.imgUrl} style={{ height: "50px", width: "50px" }} alt="post img" className="pull-left thumb margin10 img-thumbnail"></img>
       <p>{post.emText}</p>
-      <Link to={location => `/post-detail/${post._id}`}>Detail</Link> &nbsp;
-      <Link to={location => `/post-edit/${post._id}`}>Edit</Link> &nbsp;
-      <Link to={location => `/post-delete/${post._id}`}>Delete</Link> &nbsp;
+      <Link to={location => `/post-detail/${post.id}`}>Detail</Link> &nbsp;
+      <Link to={location => `/post-edit/${post.id}`}>Edit</Link> &nbsp;
+      <Link to={location => `/post-delete/${post.id}`}>Delete</Link> &nbsp;
     </div>
   )
 }
@@ -225,12 +195,10 @@ const Comments = (props) => {
   let dispatch = useDispatch();
 
   const comments = useSelector(state => {
-    console.log('d. Posts.useSelector.state', state);
     return state.posts.selectedComments;
   });
 
   let fetchData = () => {
-    console.log('2. fetchData dispatching FETCH_POSTS');
     dispatch({
       type: "FETCH_COMMENTS", payload: id,
     })
@@ -257,7 +225,7 @@ const Comments = (props) => {
 
                 return (
                   <>
-                    <div className="panel panel-default" key={comment._id}>
+                    <div className="panel panel-default" key={comment.id}>
                       <div className="panel-body">
                         {comment.body} [{date}]
                       </div>
@@ -273,6 +241,7 @@ const Comments = (props) => {
     </>
   )
 };
+
 const CommentCreate = () => {
   let history = useHistory();
   let dispatch = useDispatch();
@@ -283,7 +252,6 @@ const CommentCreate = () => {
   let saveData = (data) => {
 
     let comment = { body: data.title, date: new Date() };
-    console.log('save data', comment);
 
     dispatch({
       type: "ADD_COMMENT", payload: { postId: id, data: comment }
@@ -326,10 +294,7 @@ const PostDetail = (props) => {
   let dispatch = useDispatch();
 
   let fetchData = (id) => {
-    console.log('2. fetchData dispatching FETCH_POSTS');
-    dispatch({
-      type: "FETCH_POST_DETAIL", payload: id
-    })
+    dispatch({ type: "FETCH_POST_DETAIL", payload: id });
   }
 
   useEffect(() => {
@@ -337,7 +302,6 @@ const PostDetail = (props) => {
   }, [])
 
   const post = useSelector(state => {
-    console.log('d. Posts.useSelector.state', state);
     return state.posts.selectedPost;
   });
 
@@ -368,19 +332,15 @@ const Posts = () => {
   let dispatch = useDispatch();
 
   const posts = useSelector(state => {
-    console.log('d. Posts.useSelector.state', state);
     return state.posts.postList;
   });
 
   let fetchData = () => {
-    console.log('2. fetchData dispatching FETCH_POSTS');
-    dispatch({
-      type: "FETCH_POSTS"
-    })
+    dispatch({ type: "FETCH_POSTS" });
+    dispatch({ type: "CLEAR_SELECTION" });
   }
 
   useEffect(() => {
-    console.log('1. useEffect calling fetchData');
     fetchData();
   }, []);
 
@@ -396,16 +356,7 @@ const Posts = () => {
   )
 }
 
-
 function App() {
-
-  const myState = useSelector(state => {
-    console.log('c. App.useSelector.state', state);
-    return state;
-  });
-
-  // const dispatch = useDispatch();
-
   return (
     <Router>
       <div className="App">
@@ -413,7 +364,6 @@ function App() {
           <div className="bg-light border-right" id="sidebar-wrapper">
             <div className="sidebar-heading">Code with me</div>
             <div className="list-group list-group-flush">
-
               <Link to="/" className="list-group-item list-group-item-action bg-light">Home</Link>
               <Link to="/posts" className="list-group-item list-group-item-action bg-light">Posts</Link>
               <Link to="/post-create" className="list-group-item list-group-item-action bg-light">Create Post</Link>
